@@ -16,9 +16,9 @@ Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://guides.rubygems.org/specification-reference/ for more options
   gem.name = "hdf5"
   gem.homepage = "http://github.com/edmundhighcock/hdf5"
-  gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.license = "GPLv3"
+  gem.summary = %Q{A ruby wrapper to the HDF5 data library. Currently read only.}
+  gem.description = %Q{A ruby wrapper to the HDF5 data library. Currently read only.}
   gem.email = "edmundhighcock@users.sourceforge.net"
   gem.authors = ["Edmund Highcock"]
   # dependencies defined in Gemfile
@@ -36,6 +36,12 @@ desc "Code coverage detail"
 task :simplecov do
   ENV['COVERAGE'] = "true"
   Rake::Task['test'].execute
+end
+
+require "rake/extensiontask"
+
+Rake::ExtensionTask.new "hdf5" do |ext|
+	  ext.lib_dir = "lib/hdf5"
 end
 
 task :default => :test
