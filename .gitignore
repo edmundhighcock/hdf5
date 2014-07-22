@@ -2,6 +2,8 @@
 coverage
 coverage.data
 
+*.so
+
 # rdoc generated
 rdoc
 
