@@ -86,6 +86,8 @@ module H5SimpleReader
     attach_function :basic_open, :H5Dopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
     attach_function :basic_get_type, :H5Dget_type, [H5Types.hid_t], H5Types.hid_t
     attach_function :basic_get_space, :H5Dget_space, [H5Types.hid_t], H5Types.hid_t
+    attach_function :basic_read, :H5Dread, [H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, :pointer], H5Types.herr_t
+    attach_variable :h5t_native_float_g, :H5T_NATIVE_FLOAT_g, :int
     # Open the dataset. location_id is the id of the parent
     # file or group. Returns and H5Dataset object
     def self.open(location_id, name)
@@ -130,14 +132,21 @@ module H5SimpleReader
 #EOF
       #end
     def get_narray_pointer(narray)
+      p 'p address', narray_data_address(narray) 
         #void * narray_pointer(VALUE
+      narray_data_address(narray)
     end
-    def narray
+    def narray_all
       p ['ddims', dataspace.dims]
       narr = NArray.send(narray_type, *dataspace.dims)
-      get_narray_pointer(narray)
+      #get_narray_pointer(narr)
+      ptr = FFI::Pointer.new(get_narray_pointer(narr))
+
+      #basic_read(@id, self.class.h5t_native_float_g, 0, 0, 0, ptr)
+      basic_read(@id, datatype.id, 0, 0, 0, ptr)
+      #p ptr.get_array_of_float64(0, 6)
       p narr.shape
-      #narr
+      narr
     end
     #def array
     #end
@@ -173,6 +182,7 @@ module H5SimpleReader
     attach_function :basic_get_class, :H5Tget_class, [H5Types.hid_t], H5Types.h5t_class_t
     attach_function :basic_get_nmembers, :H5Tget_nmembers, [H5Types.hid_t], :int
     attach_function :basic_get_member_type, :H5Tget_member_type, [H5Types.hid_t, :uint], H5Types.hid_t
+    attr_reader :id
     def initialize(id)
       @id = id
     end
@@ -209,3 +219,4 @@ module H5SimpleReader
     end
   end
 end
+require 'hdf5/hdf5'

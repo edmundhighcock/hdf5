@@ -21,6 +21,7 @@ Jeweler::Tasks.new do |gem|
   gem.description = %Q{A ruby wrapper to the HDF5 data library. Currently read only.}
   gem.email = "edmundhighcock@users.sourceforge.net"
   gem.authors = ["Edmund Highcock"]
+	gem.files.exclude 'test/**/*'
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
@@ -39,6 +40,8 @@ task :simplecov do
 end
 
 require "rake/extensiontask"
+
+NAME = 'hdf5'
 
 Rake::ExtensionTask.new "hdf5" do |ext|
 	  ext.lib_dir = "lib/hdf5"
