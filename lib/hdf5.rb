@@ -7,6 +7,26 @@ class NArray
   end
 end
 
+class Array
+  # Allocate an integer64 chunk of memory, copy the contents of 
+  # the array into it and return an FFI::MemoryPointer to the memory.
+  # The memory will be garbage collected when the pointer goes out of
+  # scope. Obviously the array should contain only integers. This method
+  # is not fast and shouldn't be used for giant arrays.
+  def ffi_mem_pointer_int64
+    raise TypeError.new("Array must contain only integers.") if self.find{|el| not el.kind_of? Integer}
+    ptr = FFI::MemoryPointer.new(:int64, size)
+    ptr.write_array_of_int64(self)
+    ptr
+  end
+
+  # This method currently assumes that hsize_t is an int64... this needs
+  # to be generalised ASAP.
+  def ffi_mem_pointer_hsize_t
+    ffi_mem_pointer_int64
+  end
+end
+
 # This is a module for reading and manipulating HDF5 (Hierarchical Data Format) 
 # files. At the current time (July 2014) it is capable of basic reading operations.
 # However, its use of the FFI library means that extending its capabilities is easy
@@ -62,8 +82,20 @@ module Hdf5
     end
   end
 
+  # A module for dynamically interrogating the environment and the library
+  # and providing the correct library path etc. Currently very dumb!
+  module H5Library
+    class << self
+      # The location of the hdf5 library. Currently it is assumed to be in 
+      # the default linker path.
+      def library_path
+        'hdf5'
+      end
+    end
+  end
+
   extend  FFI::Library
-  ffi_lib 'hdf5'
+  ffi_lib H5Library.library_path
   attach_function :group_open, :H5Gopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
   attach_function :get_type, :H5Iget_type, [H5Types.hid_t], H5Types.hid_t
   #
@@ -75,7 +107,7 @@ module Hdf5
   #
   class H5File
     extend  FFI::Library
-    ffi_lib 'hdf5'
+    ffi_lib H5Library.library_path
     attach_function :basic_is_hdf5, :H5Fis_hdf5, [:string], H5Types.htri_t
     attach_function :basic_open, :H5Fopen, [:string, :uint, H5Types.hid_t], H5Types.hid_t
     attach_function :basic_close, :H5Fclose, [H5Types.hid_t], H5Types.herr_t
@@ -110,7 +142,7 @@ module Hdf5
   # data array.
   class H5Dataset
     extend  FFI::Library
-    ffi_lib 'hdf5'
+    ffi_lib H5Library.library_path
     attach_function :basic_open, :H5Dopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
     attach_function :basic_get_type, :H5Dget_type, [H5Types.hid_t], H5Types.hid_t
     attach_function :basic_get_space, :H5Dget_space, [H5Types.hid_t], H5Types.hid_t
@@ -174,7 +206,7 @@ module Hdf5
   # information about the dimensions and size of the dataset
   class H5Dataspace
     extend  FFI::Library
-    ffi_lib 'hdf5'
+    ffi_lib H5Library.library_path
     attach_function :basic_get_simple_extent_ndims, :H5Sget_simple_extent_ndims, [H5Types.hid_t], :int
     attach_function :basic_get_simple_extent_dims, :H5Sget_simple_extent_dims, [H5Types.hid_t, :pointer, :pointer], :int
     attach_function :basic_create_simple, :H5Screate_simple, [:int, :pointer, :pointer], H5Types.hid_t
@@ -185,11 +217,12 @@ module Hdf5
       maximum_dims ||= current_dims
       raise ArgumentError.new("current_dims and maximum_dims must be the same size") unless current_dims.size == maximum_dims.size
       n = current_dims.size
-      basic_dims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
-      basic_maxdims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
-      basic_dims.write_array_of_int64(current_dims)
-      basic_maxdims.write_array_of_int64(maximum_dims)
-      new(basic_create_simple(n, basic_dims, basic_maxdims))
+      #basic_dims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
+      #basic_maxdims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
+      #basic_dims.write_array_of_type(:size_t, :put_size_t, current_dims)
+      #basic_maxdims.write_array_of_type(:size_t, :put_size_t, maximum_dims)
+      # Th
+      new(basic_create_simple(n, current_dims.ffi_mem_pointer_hsize_t, maximum_dims.ffi_mem_pointer_hsize_t))
     end
     # Create a new H5Dataspace object. id must be the id
     # of a pre-existing HDF5 dataspace.
@@ -220,7 +253,7 @@ module Hdf5
   # a vast compound type
   class H5Datatype
     extend  FFI::Library
-    ffi_lib 'hdf5'
+    ffi_lib H5Library.library_path
     attach_function :basic_get_class, :H5Tget_class, [H5Types.hid_t], H5Types.h5t_class_t
     attach_function :basic_get_nmembers, :H5Tget_nmembers, [H5Types.hid_t], :int
     attach_function :basic_get_member_type, :H5Tget_member_type, [H5Types.hid_t, :uint], H5Types.hid_t
