@@ -142,6 +142,7 @@ module Hdf5
   # the data elements and the size and shape of the
   # data array.
   class H5Dataset
+    class NotFound < StandardError; end
     extend  FFI::Library
     ffi_lib H5Library.library_path
     attach_function :basic_open, :H5Dopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
@@ -152,7 +153,9 @@ module Hdf5
     # Open the dataset. location_id is the id of the parent
     # file or group. Returns and H5Dataset object
     def self.open(location_id, name)
-      return new(basic_open(location_id, name, 0))
+      id = basic_open(location_id, name, 0)
+      raise NotFound.new("dataset #{name} not found") if id < 0
+      return new(id)
     end
     # Create a new object. id is the id of the HDF5 dataset this wraps.
     # Use H5Dataset.open to open a dataset
