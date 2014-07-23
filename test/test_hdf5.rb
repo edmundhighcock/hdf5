@@ -5,6 +5,9 @@ class TestHdf5 < Test::Unit::TestCase
     file = Hdf5::H5File.new('test/field.dat.h5') # Open an existing file readonly
     p file.is_hdf5?
 
+
+    assert_raise(Hdf5::H5Dataset::NotFound){file.dataset('/field/phi/00000')}  # Open a dataset
+
     ds = file.dataset('/field/phi/0000000000')  # Open a dataset
     p ds.narray_type
 
