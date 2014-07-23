@@ -1,5 +1,5 @@
 require 'ffi'
-module H5SimpleReader
+module Hdf5
   module H5Types
     extend FFI::Library
     class << self
@@ -65,12 +65,12 @@ module H5SimpleReader
     def close
       basic_close(@id)
     end
-    # Return a group object with the given name 
+    # Return a group object with the given name
     # (relative to the root of the file)
     def group(name)
       return H5Group.open(@id, name)
     end
-    # Return a dataset object with the given name 
+    # Return a dataset object with the given name
     # (relative to the root of the file)
     def dataset(name)
       return H5Dataset.open(@id, name)
@@ -78,7 +78,7 @@ module H5SimpleReader
   end
   # Object wrapping an HDF5 Dataset, which contains
   # a set of data, and information about the type of
-  # the data elements and the size and shape of the 
+  # the data elements and the size and shape of the
   # data array.
   class H5Dataset
     extend  FFI::Library
@@ -94,7 +94,7 @@ module H5SimpleReader
       return new(basic_open(location_id, name, 0))
     end
     # Create a new object. id is the id of the HDF5 dataset this wraps.
-    # Use H5Dataset.open to open a dataset 
+    # Use H5Dataset.open to open a dataset
     def initialize(id)
       @id = id
     end
@@ -118,7 +118,7 @@ module H5SimpleReader
         else
           :compound
         end
-      else 
+      else
         raise "unknown datatype"
       end
     end
@@ -128,24 +128,24 @@ module H5SimpleReader
         #long b;
         #b = 24;
         #return b;}
-        
+
 #EOF
       #end
     def get_narray_pointer(narray)
-      p 'p address', narray_data_address(narray) 
+      p 'p address', narray_data_address(narray)
         #void * narray_pointer(VALUE
       narray_data_address(narray)
     end
     def narray_all
-      p ['ddims', dataspace.dims]
+      #p ['ddims', dataspace.dims]
       narr = NArray.send(narray_type, *dataspace.dims)
       #get_narray_pointer(narr)
-      ptr = FFI::Pointer.new(get_narray_pointer(narr))
+      ptr = FFI::Pointer.new(narray_data_address(narr))
 
       #basic_read(@id, self.class.h5t_native_float_g, 0, 0, 0, ptr)
       basic_read(@id, datatype.id, 0, 0, 0, ptr)
       #p ptr.get_array_of_float64(0, 6)
-      p narr.shape
+      #p narr.shape
       narr
     end
     #def array
@@ -158,6 +158,22 @@ module H5SimpleReader
     ffi_lib 'hdf5'
     attach_function :basic_get_simple_extent_ndims, :H5Sget_simple_extent_ndims, [H5Types.hid_t], :int
     attach_function :basic_get_simple_extent_dims, :H5Sget_simple_extent_dims, [H5Types.hid_t, :pointer, :pointer], :int
+    attach_function :basic_create_simple, :H5Screate_simple, [:int, :pointer, :pointer], H5Types.hid_t
+    # Create a new HDF5 dataspace with the given current and maximum 
+    # dimensions. If maximum_dims is omitted it is set to current_dims.
+    # Returns an H5Dataspace object wrapping the dataspace
+    def self.create_simple(current_dims, maximum_dims=nil)
+      maximum_dims ||= current_dims
+      raise ArgumentError.new("current_dims and maximum_dims must be the same size") unless current_dims.size == maximum_dims.size
+      n = current_dims.size
+      basic_dims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
+      basic_maxdims = FFI::MemoryPointer.new(H5Types.hsize_t, n)
+      basic_dims.write_array_of_int64(current_dims)
+      basic_maxdims.write_array_of_int64(maximum_dims)
+      new(basic_create_simple(n, basic_dims, basic_maxdims))
+    end
+    # Create a new H5Dataspace object. id must be the id
+    # of a pre-existing HDF5 dataspace.
     def initialize(id)
       @id = id
     end
@@ -165,16 +181,23 @@ module H5SimpleReader
     def ndims
       basic_get_simple_extent_ndims(@id)
     end
-    def dims
+    def basic_dims_maxdims
       basic_dims = FFI::MemoryPointer.new(H5Types.hsize_t, ndims)
-      basic_maxdims = FFI::MemoryPointer.new(H5Types.hsize_t, 1)
+      basic_maxdims = FFI::MemoryPointer.new(H5Types.hsize_t, ndims)
       basic_get_simple_extent_dims(@id, basic_dims, basic_maxdims)
-      basic_dims.get_array_of_int64(0, ndims)
+      return [basic_dims, basic_maxdims]
+    end
+    private :basic_dims_maxdims
+    def dims      
+      basic_dims_maxdims[0].get_array_of_int64(0, ndims)
+    end
+    def maxdims      
+      basic_dims_maxdims[1].get_array_of_int64(0, ndims)
     end
   end
   # Object for wrapping an HD5 datatype, which contains
   # information about the type and makeup of an individual element
-  # of the dataset, which may be a float or integer, or may be 
+  # of the dataset, which may be a float or integer, or may be
   # a vast compound type
   class H5Datatype
     extend  FFI::Library
@@ -209,7 +232,7 @@ module H5SimpleReader
     # Open the group. location_id is the id of the parent
     # file or group
     def self.open(location_id, name)
-      return new(H5SimpleReader.basic_group_open(location_id, name, 0))
+      return new(Hdf5.basic_group_open(location_id, name, 0))
     end
     def initialize(id)
       @id = id

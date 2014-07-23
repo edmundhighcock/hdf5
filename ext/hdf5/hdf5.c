@@ -39,7 +39,7 @@ void Init_hdf5()
   VALUE ch5_simple_reader;
   VALUE ch5_simple_reader_dataset;
   
-  ch5_simple_reader = rb_const_get(rb_cObject, rb_intern("H5SimpleReader"));
+  ch5_simple_reader = rb_const_get(rb_cObject, rb_intern("Hdf5"));
   ch5_simple_reader_dataset = rb_const_get(ch5_simple_reader, rb_intern("H5Dataset")); 
   rb_define_method(ch5_simple_reader_dataset, "narray_data_address", narray_data_address, 1);
   /*VALUE ctrinity;*/
