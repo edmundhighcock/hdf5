@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "hdf5"
   gem.homepage = "http://github.com/edmundhighcock/hdf5"
   gem.license = "GPLv3"
-  gem.summary = %Q{A ruby wrapper to the HDF5 data library. Currently read only.}
-  gem.description = %Q{A ruby wrapper to the HDF5 data library. Currently read only.}
+  gem.summary = %Q{A ruby wrapper to the HDF5 data library. Currently can only read existing HDF5 files.}
+  gem.description = %Q{A ruby wrapper to the HDF5 data library. Currently can only read HDF5 files.}
   gem.email = "edmundhighcock@users.sourceforge.net"
   gem.authors = ["Edmund Highcock"]
 	gem.files.exclude 'test/**/*'

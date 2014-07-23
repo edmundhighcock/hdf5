@@ -1,4 +1,5 @@
 require 'ffi'
+require 'narray'
 class NArray
   # Returns an FFI::Pointer which points to the location
   # of the actual data array in memory.
@@ -195,8 +196,36 @@ module Hdf5
     # scope in the future for writing custom closures for reading in more
     # complex datatypes.
     def narray_all
-      narr = NArray.send(narray_type, *dataspace.dims)
+      narr = NArray.send(narray_type, *dataspace.dims.reverse) # Note narray is fortran-style column major
       basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_pointer)
+      narr
+    end
+    # Create an NArray of the appropriate type and size and a subsection of
+    # the dataset into it. start_indexes and end_indexes should be arrays 
+    # of size ndims. start_indexes should contain the (zero-based) offset
+    # of the start of the read, and end_indexes should contain the offset of 
+    # the end of the read. Each element of end_indexes can either be a zero
+    # based positive offset, or a negative offset where -1 corresponds to the
+    # end of the dataset dimension. This function will not work for complicated 
+    # datatypes (basically only works for ints, floats and complexes, where a datatype
+    # composed of two floats is assumed to be a complex). There is 
+    # scope in the future for writing custom closures for reading in more
+    # complex datatypes.
+    # As an example, consider a two-dimensional 6x10 dataset. 
+    #   dataset.narray_read([0,0], [-1,-1]) # would read the whole of the dataset
+    #   dataset.narray_read([0,0], [5,9]) # would read the whole of the dataset
+    #   dataset.narray_read([0,0], [2,-1]) # would read half the dataset
+    #   dataset.narray_read([0,0], [-4,-1]) # would read the same half of the dataset
+    #   dataset.narray_read([2,4], [2,4]) # would read one element of the dataset
+    def narray_simple_read(start_indexes, end_indexes)
+      nd = dataspace.ndims
+      raise ArgumentError.new("start_indexes and end_indexes must be of size ndims") unless start_indexes.size == nd and end_indexes.size == nd
+      szs = dataspace.dims
+      counts = end_indexes.zip(start_indexes.zip(szs)).map{|ei, (si, sz)| ei < 0 ? ei + sz - si + 1 : ei - si + 1}
+      dtspce = H5Dataspace.create_simple(counts)
+      dtspce.offset_simple(start_indexes)
+      narr = NArray.send(narray_type, *dtspce.dims.reverse) # Note narray is fortran-style column major
+      basic_read(@id, datatype.id, 0, dtspce.id, 0, narr.ffi_pointer)
       narr
     end
     #def array
@@ -205,11 +234,13 @@ module Hdf5
   # Object for wrapping an HD5 dataspace, which contains
   # information about the dimensions and size of the dataset
   class H5Dataspace
+    attr_reader :id
     extend  FFI::Library
     ffi_lib H5Library.library_path
     attach_function :basic_get_simple_extent_ndims, :H5Sget_simple_extent_ndims, [H5Types.hid_t], :int
     attach_function :basic_get_simple_extent_dims, :H5Sget_simple_extent_dims, [H5Types.hid_t, :pointer, :pointer], :int
     attach_function :basic_create_simple, :H5Screate_simple, [:int, :pointer, :pointer], H5Types.hid_t
+    attach_function :basic_offset_simple, :H5Soffset_simple, [H5Types.hid_t, :pointer], H5Types.herr_t
     # Create a new HDF5 dataspace with the given current and maximum 
     # dimensions. If maximum_dims is omitted it is set to current_dims.
     # Returns an H5Dataspace object wrapping the dataspace
@@ -240,11 +271,19 @@ module Hdf5
       return [basic_dims, basic_maxdims]
     end
     private :basic_dims_maxdims
+    # Get the size of the dataspace
     def dims      
       basic_dims_maxdims[0].get_array_of_int64(0, ndims)
     end
+    # Get the maximum size of the dataspace
     def maxdims      
       basic_dims_maxdims[1].get_array_of_int64(0, ndims)
+    end
+    # Set the offset of the dataspace. offsets should be an ndims-sized array
+    # of zero-based integer offsets. 
+    def offset_simple(offsets)
+      raise ArgumentError.new("offsets should have ndims elements") unless offsets.size == ndims
+      basic_offset_simple(@id, offsets.ffi_mem_pointer_hsize_t)
     end
   end
   # Object for wrapping an HD5 datatype, which contains
