@@ -6,7 +6,6 @@ class TestHdf5 < Test::Unit::TestCase
     p file.is_hdf5?
 
 
-    assert_raise(Hdf5::H5Dataset::NotFound){file.dataset('/field/phi/00000')}  # Open a dataset
 
     ds = file.dataset('/field/phi/0000000000')  # Open a dataset
     p ds.narray_type
@@ -28,6 +27,8 @@ class TestHdf5 < Test::Unit::TestCase
     p na3 = ds.narray_simple_read([1,0,0], [3,-1,-1]) # Read a section of the dataset into an narray
     assert_equal(Complex.rect(-0.06146728043206969, 0.0), na3[0,0,0])
     assert_equal([4,1,3], na3.shape)
+
+    assert_raise(Hdf5::H5Dataset::NotFound){file.dataset('/field/phi/00000')}  # Open a non-existent dataset
 
     file.close # Close the file
     
