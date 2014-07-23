@@ -1,4 +1,9 @@
 require 'ffi'
+class NArray
+  def ffi_mem_pointer
+    FFI::Pointer.new(Hdf5.narray_data_address(self))
+  end
+end
 module Hdf5
   module H5Types
     extend FFI::Library
@@ -106,46 +111,37 @@ module Hdf5
     def dataspace
       H5Dataspace.new(basic_get_space(@id))
     end
+    # Gives the narray type corresponding to the datatype of the dataset
+    # Raises an error for unsupported datatypes.
+    # datatypes (basically only works for ints, floats and complexes, where a datatype
+    # composed of two floats is assumed to be a complex).
     def narray_type
       #cls = H5Types.h5t_class_t
       #p 'datatype', datatype.h5_class
-      case datatype.h5_class
+      case h5c = datatype.h5_class
+      when :h5t_integer
+        :integer
       when :h5t_float
         :float
       when :h5t_compound
         if datatype.is_complex?
           :complex
         else
-          :compound
+          raise "Unsupported datatype for narray: #{h5c}"
         end
       else
-        raise "unknown datatype"
+        raise "Unsupported datatype for narray: #{h5c}"
       end
     end
-      #inline :C do |builder|
-        #builder.c <<EOF
-        #long asfdsf(){
-        #long b;
-        #b = 24;
-        #return b;}
-
-#EOF
-      #end
-    def get_narray_pointer(narray)
-      p 'p address', narray_data_address(narray)
-        #void * narray_pointer(VALUE
-      narray_data_address(narray)
-    end
+    # Create an NArray of the appropriate size and read the entire 
+    # content of the dataset into it. Will not work for complicated 
+    # datatypes (basically only works for ints, floats and complexes, where a datatype
+    # composed of two floats is assumed to be a complex). There is 
+    # scope in the future for writing custom closures for reading in more
+    # complex datatypes.
     def narray_all
-      #p ['ddims', dataspace.dims]
       narr = NArray.send(narray_type, *dataspace.dims)
-      #get_narray_pointer(narr)
-      ptr = FFI::Pointer.new(narray_data_address(narr))
-
-      #basic_read(@id, self.class.h5t_native_float_g, 0, 0, 0, ptr)
-      basic_read(@id, datatype.id, 0, 0, 0, ptr)
-      #p ptr.get_array_of_float64(0, 6)
-      #p narr.shape
+      basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_mem_pointer)
       narr
     end
     #def array
