@@ -107,6 +107,7 @@ module Hdf5
   #     file.close
   #
   class H5File
+    class InvalidFile < StandardError; end
     extend  FFI::Library
     ffi_lib H5Library.library_path
     attach_function :basic_is_hdf5, :H5Fis_hdf5, [:string], H5Types.htri_t
@@ -115,8 +116,11 @@ module Hdf5
     attr_reader :id
     # Open the file with the given filename. Currently read only
     def initialize(filename)
+      raise Errno::ENOENT.new("File #{filename} does not exist") unless FileTest.exist?(filename)
+      raise InvalidFile.new("File #{filename} is not a valid hdf5 file") unless basic_is_hdf5(filename) > 0
       @filename = filename
       @id = basic_open(filename, 0x0000, 0)
+      raise InvalidFile.new("An unknown problem occured opening #{filename}") if @id < 0
     end
     # Is the file a valid hdf5 file
     def is_hdf5?

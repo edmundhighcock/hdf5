@@ -29,6 +29,8 @@ class TestHdf5 < Test::Unit::TestCase
     assert_equal([4,1,3], na3.shape)
 
     assert_raise(Hdf5::H5Dataset::NotFound){file.dataset('/field/phi/00000')}  # Open a non-existent dataset
+    assert_raise(Errno::ENOENT){Hdf5::H5File.new('test/fild.dat.h5')}  # Open a non-existent dataset
+    assert_raise(Hdf5::H5File::InvalidFile){Hdf5::H5File.new('test/helper.rb')}  # Open a non-existent dataset
 
     file.close # Close the file
     
