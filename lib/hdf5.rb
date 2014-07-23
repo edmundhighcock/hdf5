@@ -1,10 +1,28 @@
 require 'ffi'
 class NArray
-  def ffi_mem_pointer
+  # Returns an FFI::Pointer which points to the location
+  # of the actual data array in memory.
+  def ffi_pointer
     FFI::Pointer.new(Hdf5.narray_data_address(self))
   end
 end
+
+# This is a module for reading and manipulating HDF5 (Hierarchical Data Format) 
+# files. At the current time (July 2014) it is capable of basic reading operations.
+# However, its use of the FFI library means that extending its capabilities is easy
+# and quick. For a basic example see the test file.  
+# Basic usage: 
+#     file = Hdf5::H5File.new('filename.hdf5')
+#     dataset = file.dataset('/path/to/dataset')
+#     narray = dataset.narray_all
+#     file.close
+
+
 module Hdf5
+
+  # A module containing functions for relating HDF5 types to the appropriate 
+  # FFI symbol. At the moment these are set by hand, but at some point in the 
+  # future they should be set dynamically by interrogation of the the library.
   module H5Types
     extend FFI::Library
     class << self
@@ -49,7 +67,12 @@ module Hdf5
   attach_function :group_open, :H5Gopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
   attach_function :get_type, :H5Iget_type, [H5Types.hid_t], H5Types.hid_t
   #
-  # Object for wrapping an HDF file
+  # Object for wrapping an HDF file. Basic usage: 
+  #     file = Hdf5::H5File.new('filename.hdf5')
+  #     dataset = file.dataset('/path/to/dataset')
+  #     narray = dataset.narray_all
+  #     file.close
+  #
   class H5File
     extend  FFI::Library
     ffi_lib 'hdf5'
@@ -141,7 +164,7 @@ module Hdf5
     # complex datatypes.
     def narray_all
       narr = NArray.send(narray_type, *dataspace.dims)
-      basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_mem_pointer)
+      basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_pointer)
       narr
     end
     #def array

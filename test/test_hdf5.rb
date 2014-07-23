@@ -3,20 +3,22 @@ require 'narray'
 
 class TestHdf5 < Test::Unit::TestCase
   def test_read
-    file = Hdf5::H5File.new('test/field.dat.h5')
+    file = Hdf5::H5File.new('test/field.dat.h5') # Open an existing file readonly
     p file
     p file.is_hdf5?
-    ds = file.dataset('/field/phi/0000000000')
+    ds = file.dataset('/field/phi/0000000000')  # Open a dataset
     p ds.narray_type
-     p dt = ds.datatype
-     p dt.nmembers
-     p dsp = ds.dataspace
-     p dsp.ndims
-     p dsp.dims
-     p 'maxdims', dsp.maxdims
-     p na = ds.narray_all
-     assert_equal(Complex.rect(-0.05908707447771868, 0.0), na[0,0,0])
-     p ['rv', file.close]
+    p dt = ds.datatype # Access the datatype
+    p dt.nmembers
+    p dsp = ds.dataspace # Access the dataspace
+    p dsp.ndims
+    p dsp.dims
+    p 'maxdims', dsp.maxdims
+    p na = ds.narray_all  # Read the whole dataset into an narray
+    assert_equal(Complex.rect(-0.05908707447771868, 0.0), na[0,0,0])
+    file.close # Close the file
+    
+    
     file2 = Hdf5::H5File.new('test/omega.dat.h5')
     p file2.dataset('/omega').narray_all
     p ky = file2.dataset('/ky')
@@ -24,5 +26,6 @@ class TestHdf5 < Test::Unit::TestCase
     assert_equal(-1, ky.dataspace.maxdims[0])
     ds = Hdf5::H5Dataspace.create_simple([12,1,1])
     p ds, ds.dims
+    file2.close
   end
 end
