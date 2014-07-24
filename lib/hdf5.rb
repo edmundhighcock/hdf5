@@ -148,6 +148,7 @@ module Hdf5
     extend  FFI::Library
     ffi_lib H5Library.library_path
     attach_function :basic_open, :H5Dopen2, [H5Types.hid_t, :string, H5Types.hid_t], H5Types.hid_t
+    attach_function :basic_close, :H5Dclose, [H5Types.hid_t], H5Types.herr_t
     attach_function :basic_get_type, :H5Dget_type, [H5Types.hid_t], H5Types.hid_t
     attach_function :basic_get_space, :H5Dget_space, [H5Types.hid_t], H5Types.hid_t
     attach_function :basic_read, :H5Dread, [H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, H5Types.hid_t, :pointer], H5Types.herr_t
@@ -157,11 +158,13 @@ module Hdf5
     def self.open(location_id, name)
       id = basic_open(location_id, name, 0)
       raise NotFound.new("dataset #{name} not found") if id < 0
-      return new(id)
+      ds = new(id)
+      ds
     end
     # Create a new object. id is the id of the HDF5 dataset this wraps.
     # Use H5Dataset.open to open a dataset
     def initialize(id)
+      ObjectSpace.define_finalizer(self){H5Dataset.basic_close(id)}
       @id = id
     end
     # Return an H5Datatype object containing information about the type
@@ -242,6 +245,7 @@ module Hdf5
     attr_reader :id
     extend  FFI::Library
     ffi_lib H5Library.library_path
+    attach_function :basic_close, :H5Sclose, [H5Types.hid_t], H5Types.herr_t
     attach_function :basic_get_simple_extent_ndims, :H5Sget_simple_extent_ndims, [H5Types.hid_t], :int
     attach_function :basic_get_simple_extent_dims, :H5Sget_simple_extent_dims, [H5Types.hid_t, :pointer, :pointer], :int
     attach_function :basic_create_simple, :H5Screate_simple, [:int, :pointer, :pointer], H5Types.hid_t
@@ -263,6 +267,7 @@ module Hdf5
     # Create a new H5Dataspace object. id must be the id
     # of a pre-existing HDF5 dataspace.
     def initialize(id)
+      ObjectSpace.define_finalizer(self){H5Dataspace.basic_close(id)}
       @id = id
     end
     # Number of dimensions in the dataspace
@@ -298,11 +303,13 @@ module Hdf5
   class H5Datatype
     extend  FFI::Library
     ffi_lib H5Library.library_path
+    attach_function :basic_close, :H5Tclose, [H5Types.hid_t], H5Types.herr_t
     attach_function :basic_get_class, :H5Tget_class, [H5Types.hid_t], H5Types.h5t_class_t
     attach_function :basic_get_nmembers, :H5Tget_nmembers, [H5Types.hid_t], :int
     attach_function :basic_get_member_type, :H5Tget_member_type, [H5Types.hid_t, :uint], H5Types.hid_t
     attr_reader :id
     def initialize(id)
+      ObjectSpace.define_finalizer(self){H5Datatype.basic_close(id)}
       @id = id
     end
     def h5_class

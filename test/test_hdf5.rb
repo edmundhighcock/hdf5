@@ -28,11 +28,18 @@ class TestHdf5 < Test::Unit::TestCase
     assert_equal(Complex.rect(-0.06146728043206969, 0.0), na3[0,0,0])
     assert_equal([4,1,3], na3.shape)
 
+    p 'HERE2'
     assert_raise(Hdf5::H5Dataset::NotFound){file.dataset('/field/phi/00000')}  # Open a non-existent dataset
+    p 'HERE3'
     assert_raise(Errno::ENOENT){Hdf5::H5File.new('test/fild.dat.h5')}  # Open a non-existent file
+    p 'HERE3'
     assert_raise(Hdf5::H5File::InvalidFile){Hdf5::H5File.new('test/helper.rb')}  # Open a  nonvalid file
 
+    #p 'HERE2'
+
     file.close # Close the file
+
+    p 'HERE'
     
     
     file2 = Hdf5::H5File.new('test/omega.dat.h5')
