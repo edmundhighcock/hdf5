@@ -7,23 +7,33 @@ files. At the current time (July 2014) it is capable of basic reading operations
 However, its use of the FFI library means that extending its capabilities is easy
 and quick. 
 
+Installation
+------------
+
+Make sure you have libhdf5 installed on your system, then simply execute:
+
+    gem install hdf5
+
 Examples
 --------
 
 Basic usage: 
 
-     file = Hdf5::H5File.new('filename.hdf5')
-     dataset = file.dataset('/path/to/dataset')
-     narray = dataset.narray_all
-     file.close
+    require 'hdf5'
+    file = Hdf5::H5File.new('filename.hdf5')
+    dataset = file.dataset('/path/to/dataset')
+    narray = dataset.narray_all
+    file.close
 
 Extended example:
 
 
+    require 'hdf5'
+
     file = Hdf5::H5File.new('test/field.dat.h5') # Open an existing file readonly
 
     ds = file.dataset('/field/phi/0000000000')  # Open a dataset
-    p ds.narray_type
+    p ds.narray_type # Print the Ruby/NArray type of the dataset (if possible)
 
     p dt = ds.datatype # Access the datatype
     p dt.nmembers # Print the number of members of the datatype
