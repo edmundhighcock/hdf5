@@ -37,8 +37,6 @@ end
 #     dataset = file.dataset('/path/to/dataset')
 #     narray = dataset.narray_all
 #     file.close
-
-
 module Hdf5
 
   # A module containing functions for relating HDF5 types to the appropriate 
