@@ -12,16 +12,14 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib"]
   s.authors = ["Edmund Highcock"]
-  s.date = "2014-07-24"
+  s.date = "2014-09-18"
   s.description = "A ruby wrapper to the HDF5 data library. Currently can only read HDF5 files."
   s.email = "edmundhighcock@users.sourceforge.net"
   s.extensions = ["ext/hdf5/extconf.rb"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.md",
-    "README.md.orig",
-    "README.rdoc",
-    "README.rdoc.orig"
+    "README.rdoc"
   ]
   s.files = [
     ".document",

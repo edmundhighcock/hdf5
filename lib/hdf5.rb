@@ -60,6 +60,13 @@ module Hdf5
       def hsize_t
         :size_t
       end
+      def h5t_sign_t
+        enum [
+          :h5t_sgn_error, -1,
+          :h5t_sgn_none, 0, # unsigned
+          :h5t_sgn_2, 1, # signed
+        ]
+      end
       def h5t_class_t
         enum [
           :h5t_no_class         , -1,  #*error                                      */
@@ -181,10 +188,10 @@ module Hdf5
     # composed of two floats is assumed to be a complex).
     def narray_type
       #cls = H5Types.h5t_class_t
-      #p 'datatype', datatype.h5_class
+      p 'datatype', datatype.h5_class
       case h5c = datatype.h5_class
       when :h5t_integer
-        :integer
+        "UInt32"
       when :h5t_float
         :float
       when :h5t_compound
@@ -204,7 +211,10 @@ module Hdf5
     # scope in the future for writing custom closures for reading in more
     # complex datatypes.
     def narray_all
-      narr = NArray.send(narray_type, *dataspace.dims.reverse) # Note narray is fortran-style column major
+      narr = Kernel.const_get("NArray::#{narray_type}").new(dataspace.dims.reverse) # Note narray is fortran-style column major
+      p narr.shape
+      p narr.ffi_pointer
+      p narr
       basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_pointer)
       narr
     end
@@ -305,6 +315,8 @@ module Hdf5
     ffi_lib H5Library.library_path
     attach_function :basic_close, :H5Tclose, [H5Types.hid_t], H5Types.herr_t
     attach_function :basic_get_class, :H5Tget_class, [H5Types.hid_t], H5Types.h5t_class_t
+    attach_function :basic_get_size, :H5Tget_size, [H5Types.hid_t], H5Types.hsize_t
+    attach_function :basic_get_sign, :H5Tget_sign, [H5Types.hid_t], H5Types.h5t_sign_t
     attach_function :basic_get_nmembers, :H5Tget_nmembers, [H5Types.hid_t], :int
     attach_function :basic_get_member_type, :H5Tget_member_type, [H5Types.hid_t, :uint], H5Types.hid_t
     attr_reader :id
@@ -314,6 +326,12 @@ module Hdf5
     end
     def h5_class
       basic_get_class(@id)
+    end
+    def h5_size
+      basic_get_size(@id)
+    end
+    def h5_sign
+      basic_get_sign(@id)
     end
     # The number of members in a compound datatype
     def nmembers

@@ -12,7 +12,7 @@ require 'mkmf'
 #$objs = srcs.collect { |f| f.sub(".c", ".o") }                                                           
 nagemspec=Gem::Specification.find_by_name('narray')
 naconfig = nagemspec.full_gem_path
-$CPPFLAGS = " -I#{File.join(naconfig, '')} "+$CPPFLAGS
+$CPPFLAGS = " -I#{File.join(naconfig, 'ext/narray')} " + $CPPFLAGS
 p ['CPPFLAGS', $CPPFLAGS]
 
 have_header("narray.h")
