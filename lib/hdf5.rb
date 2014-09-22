@@ -189,14 +189,21 @@ module Hdf5
     def narray_type
       #cls = H5Types.h5t_class_t
       p 'datatype', datatype.h5_class
-      case h5c = datatype.h5_class
+      p 'size', datatype.h5_size
+      p 'sign', datatype.h5_sign
+      h5_sign = datatype.h5_sign
+      h5_size = datatype.h5_size
+      case datatype.h5_class
       when :h5t_integer
-        "UInt32"
+        sign = if h5_sign == :h5t_sgn_2 then "" else "U" end
+        "#{sign}Int#{8 * h5_size}"
       when :h5t_float
-        :float
+        size = if h5_size == 4 then "S" else "D" end
+        "#{size}Float"
       when :h5t_compound
         if datatype.is_complex?
-          :complex
+          size = if h5_size == 8 then "S" else "D" end
+          "#{size}Complex"
         else
           raise "Unsupported datatype for narray: #{h5c}"
         end
@@ -211,7 +218,7 @@ module Hdf5
     # scope in the future for writing custom closures for reading in more
     # complex datatypes.
     def narray_all
-      narr = Kernel.const_get("NArray::#{narray_type}").new(dataspace.dims.reverse) # Note narray is fortran-style column major
+      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dataspace.dims.reverse) # Note narray is fortran-style column major
       p narr.shape
       p narr.ffi_pointer
       p narr
@@ -242,7 +249,7 @@ module Hdf5
       counts = end_indexes.zip(start_indexes.zip(szs)).map{|ei, (si, sz)| ei < 0 ? ei + sz - si + 1 : ei - si + 1}
       dtspce = H5Dataspace.create_simple(counts)
       dtspce.offset_simple(start_indexes)
-      narr = NArray.send(narray_type, *dtspce.dims.reverse) # Note narray is fortran-style column major
+      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dtspce.dims.reverse) # Note narray is fortran-style column major
       basic_read(@id, datatype.id, 0, dtspce.id, 0, narr.ffi_pointer)
       narr
     end

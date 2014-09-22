@@ -1,6 +1,6 @@
 source "http://rubygems.org"
   gem "ffi"
-  gem "narray", "0.9.2"
+  gem "narray", "0.9.1.pre.3.pre.ga99b"
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
