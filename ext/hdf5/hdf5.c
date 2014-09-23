@@ -18,19 +18,11 @@ static VALUE narray_data_address(VALUE class, VALUE narray_obj){
   int addrs;
   VALUE address;
 
-  /*printf("RUNNING TRINITY!!!\n\n");*/
-  Data_Get_Struct(narray_obj, struct narray_data_t, narray);
+  Data_Get_Struct(narray_obj, narray_data_t, narray);
   addrs = (int)narray->ptr;
   address = INT2FIX(addrs);
 
-
-	/*printf("input file name was %s\n", input_file_name_c);*/
-	/**/
-	/*free(input_file_name_c);*/
-
-	
-
-	return address;
+  return address;
 
 }
 

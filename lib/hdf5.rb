@@ -81,7 +81,6 @@ module Hdf5
           :h5t_enum    , 8, #*enumeration types                          */
           :h5t_vlen    , 9, #*variable-length types                      */
           :h5t_array           , 10,  #*array types                                */
-
           :h5t_nclasses                #*this must be last                          */
         ]
       end
@@ -188,9 +187,6 @@ module Hdf5
     # composed of two floats is assumed to be a complex).
     def narray_type
       #cls = H5Types.h5t_class_t
-      p 'datatype', datatype.h5_class
-      p 'size', datatype.h5_size
-      p 'sign', datatype.h5_sign
       h5_sign = datatype.h5_sign
       h5_size = datatype.h5_size
       case datatype.h5_class
@@ -218,10 +214,7 @@ module Hdf5
     # scope in the future for writing custom closures for reading in more
     # complex datatypes.
     def narray_all
-      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dataspace.dims.reverse) # Note narray is fortran-style column major
-      p narr.shape
-      p narr.ffi_pointer
-      p narr
+      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dataspace.dims.reverse).allocate # Note narray is fortran-style column major
       basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_pointer)
       narr
     end
@@ -249,7 +242,7 @@ module Hdf5
       counts = end_indexes.zip(start_indexes.zip(szs)).map{|ei, (si, sz)| ei < 0 ? ei + sz - si + 1 : ei - si + 1}
       dtspce = H5Dataspace.create_simple(counts)
       dtspce.offset_simple(start_indexes)
-      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dtspce.dims.reverse) # Note narray is fortran-style column major
+      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dtspce.dims.reverse).allocate # Note narray is fortran-style column major
       basic_read(@id, datatype.id, 0, dtspce.id, 0, narr.ffi_pointer)
       narr
     end
