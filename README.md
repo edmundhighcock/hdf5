@@ -2,7 +2,8 @@
 Hdf5
 ====
 
-Updated for the new [NArray 0.9](https://github.com/Enucatl/narray-devel).
+Updated for the new [NMatrix](http://sciruby.com/nmatrix/docs/NMatrix.html)
+library, which appears to be on active development.
 This is a Ruby module for reading and manipulating HDF5 (Hierarchical Data Format) 
 files. At the current time (July 2014) it is capable of basic reading operations.
 However, its use of the FFI library means that extending its capabilities is easy
