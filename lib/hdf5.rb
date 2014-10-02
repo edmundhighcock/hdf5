@@ -186,9 +186,7 @@ module Hdf5
       case datatype.h5_class
       when :h5t_integer
         sign = if h5_sign == :h5t_sgn_2 then 0 else 1 end
-        print "INTEGER:", h5_size, sign, "\n"
         dtype = INT_DTYPE_BY_SIZE[h5_size << sign]
-        print dtype
       when :h5t_float
         dtype = "float#{8 * h5_size}"
       when :h5t_compound
