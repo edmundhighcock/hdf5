@@ -32,6 +32,7 @@ end
 #     file.close
 module Hdf5
 
+  INT_DTYPE_BY_SIZE = {1 => :int8, 2 => :int16, 4 => :int32, 8 => :int64, 16 => :int64}
   # A module containing functions for relating HDF5 types to the appropriate 
   # FFI symbol. At the moment these are set by hand, but at some point in the 
   # future they should be set dynamically by interrogation of the the library.
@@ -184,8 +185,8 @@ module Hdf5
       h5_size = datatype.h5_size
       case datatype.h5_class
       when :h5t_integer
-        sign = if h5_sign == :h5t_sgn_2 then "" else "u" end
-        dtype = "#{sign}int#{8 * h5_size}"
+        sign = if h5_sign == :h5t_sgn_2 then 0 else 1 end
+        dtype = "#{sign}int#{INT_DTYPE_BY_SIZE[h5_size + sign]}"
       when :h5t_float
         dtype = "float#{8 * h5_size}"
       when :h5t_compound
