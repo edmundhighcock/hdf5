@@ -54,4 +54,12 @@ class TestHdf5 < Test::Unit::TestCase
     p ds, ds.dims
     file2.close
   end
+
+  def test_read_ints 
+    file = Hdf5::H5File.new('test/ints.h5')
+    p file.dataset('/int32').narray_all
+    p file.dataset('/uint16').narray_all
+    p file.dataset('/uint32').narray_all
+    file.close
+  end
 end
