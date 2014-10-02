@@ -15,7 +15,6 @@ Gem::Specification.new do |s|
   s.date = "2014-09-23"
   s.description = "A ruby wrapper to the HDF5 data library. Currently can only read HDF5 files."
   s.email = "edmundhighcock@users.sourceforge.net"
-  s.extensions = ["ext/hdf5/extconf.rb"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.md",
@@ -44,7 +43,7 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<ffi>, [">= 0"])
-      s.add_runtime_dependency(%q<narray>, [">= 0"])
+      s.add_runtime_dependency(%q<nmatrix>, [">= 0"])
       s.add_development_dependency(%q<shoulda>, ["= 3.0.1"])
       s.add_development_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_development_dependency(%q<bundler>, ["> 1.0.0"])
@@ -54,7 +53,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<rake-compiler>, [">= 0"])
     else
       s.add_dependency(%q<ffi>, [">= 0"])
-      s.add_dependency(%q<narray>, [">= 0"])
+      s.add_dependency(%q<nmatrix>, [">= 0"])
       s.add_dependency(%q<shoulda>, ["= 3.0.1"])
       s.add_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_dependency(%q<bundler>, ["> 1.0.0"])
@@ -65,7 +64,7 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<ffi>, [">= 0"])
-    s.add_dependency(%q<narray>, [">= 0"])
+    s.add_dependency(%q<nmatrix>, [">= 0"])
     s.add_dependency(%q<shoulda>, ["= 3.0.1"])
     s.add_dependency(%q<rdoc>, ["~> 3.12"])
     s.add_dependency(%q<bundler>, ["> 1.0.0"])
