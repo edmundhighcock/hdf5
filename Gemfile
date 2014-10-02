@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 gem "ffi"
-gem "narray", :git => "https://github.com/Enucatl/narray-devel.git", :tag => "0.9.3"
+gem "narray", :git => "https://github.com/Enucatl/narray-devel.git", :tag => "0.9.4"
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
