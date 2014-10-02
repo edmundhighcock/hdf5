@@ -1,12 +1,5 @@
 require 'ffi'
-require 'narray'
-class NArray
-  # Returns an FFI::Pointer which points to the location
-  # of the actual data array in memory.
-  def ffi_pointer
-    FFI::Pointer.new(Hdf5.narray_data_address(self))
-  end
-end
+require 'nmatrix'
 
 class Array
   # Allocate an integer64 chunk of memory, copy the contents of 
@@ -191,21 +184,20 @@ module Hdf5
       h5_size = datatype.h5_size
       case datatype.h5_class
       when :h5t_integer
-        sign = if h5_sign == :h5t_sgn_2 then "" else "U" end
-        "#{sign}Int#{8 * h5_size}"
+        sign = if h5_sign == :h5t_sgn_2 then "" else "u" end
+        dtype = "#{sign}int#{8 * h5_size}"
       when :h5t_float
-        size = if h5_size == 4 then "S" else "D" end
-        "#{size}Float"
+        dtype = "float#{8 * h5_size}"
       when :h5t_compound
         if datatype.is_complex?
-          size = if h5_size == 8 then "S" else "D" end
-          "#{size}Complex"
+          dtype = "complex#{8 * h5_size}"
         else
           raise "Unsupported datatype for narray: #{h5c}"
         end
       else
         raise "Unsupported datatype for narray: #{h5c}"
       end
+      dtype.to_sym
     end
     # Create an NArray of the appropriate size and read the entire 
     # content of the dataset into it. Will not work for complicated 
@@ -214,8 +206,8 @@ module Hdf5
     # scope in the future for writing custom closures for reading in more
     # complex datatypes.
     def narray_all
-      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dataspace.dims.reverse).allocate # Note narray is fortran-style column major
-      basic_read(@id, datatype.id, 0, 0, 0, narr.ffi_pointer)
+      narr = NMatrix.new(dataspace.dims.reverse, dtype: narray_type) # Note narray is fortran-style column major
+      basic_read(@id, datatype.id, 0, 0, 0, FFI::Pointer.new(narr.data_pointer))
       narr
     end
     # Create an NArray of the appropriate type and size and a subsection of
@@ -242,8 +234,8 @@ module Hdf5
       counts = end_indexes.zip(start_indexes.zip(szs)).map{|ei, (si, sz)| ei < 0 ? ei + sz - si + 1 : ei - si + 1}
       dtspce = H5Dataspace.create_simple(counts)
       dtspce.offset_simple(start_indexes)
-      narr = "NArray::#{narray_type}".split("::").reduce(NArray, :const_get).new(dtspce.dims.reverse).allocate # Note narray is fortran-style column major
-      basic_read(@id, datatype.id, 0, dtspce.id, 0, narr.ffi_pointer)
+      narr = NMatrix.new(dtspce.dims.reverse, dtype: narray_type) # Note narray is fortran-style column major
+      basic_read(@id, datatype.id, 0, dtspce.id, 0, FFI::Pointer.new(narr.data_pointer))
       narr
     end
     #def array

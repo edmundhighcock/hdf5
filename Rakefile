@@ -39,14 +39,6 @@ task :simplecov do
   Rake::Task['test'].execute
 end
 
-require "rake/extensiontask"
-
-NAME = 'hdf5'
-
-Rake::ExtensionTask.new "hdf5" do |ext|
-	  ext.lib_dir = "lib/hdf5"
-end
-
 task :default => :test
 
 require 'rdoc/task'
